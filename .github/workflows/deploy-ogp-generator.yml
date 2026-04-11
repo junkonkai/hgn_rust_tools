@@ -63,22 +63,21 @@ jobs:
       - name: Build release binary
         run: cargo build -p ogp-generator --release
 
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HGN_PRIVATE_KEY }}
+
       - name: Deploy binary to server
         env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ vars.SSH_HOST }}
+          DEPLOY_PORT: ${{ vars.SSH_PORT }}
+          DEPLOY_USER: ${{ vars.SSH_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          install -m 600 /dev/null /tmp/deploy_key
-          printf '%s\n' "$SSH_KEY" > /tmp/deploy_key
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          scp -i /tmp/deploy_key -P "$DEPLOY_PORT" \
+          scp -o StrictHostKeyChecking=no -P "$DEPLOY_PORT" \
               target/release/ogp-generator \
               "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/ogp-generator.new"
-          ssh -i /tmp/deploy_key -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh -o StrictHostKeyChecking=no -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
               "chmod +x $DEPLOY_PATH/ogp-generator.new && \
                mv $DEPLOY_PATH/ogp-generator.new $DEPLOY_PATH/ogp-generator"
-          rm -f /tmp/deploy_key
