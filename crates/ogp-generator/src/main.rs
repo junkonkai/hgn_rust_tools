@@ -5,10 +5,16 @@ use serde::{Deserialize, Serialize};
 use std::process;
 
 #[derive(Debug, Deserialize)]
-pub struct Payload {
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum Payload {
+    Review(ReviewPayload),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReviewPayload {
     pub review_id: i64,
     pub game_title_name: String,
-    pub show_id: String,
+    pub user_name: String,
     pub total_score: Option<i64>,
     pub fear_meter: Option<i64>,
     pub score_story: Option<i64>,
@@ -30,7 +36,7 @@ fn run() -> Result<String, String> {
         .nth(1)
         .ok_or_else(|| "Usage: ogp-generator '<JSON>'".to_string())?;
 
-    // JSONをパース
+    // JSONをパース（"type"フィールドでディスパッチ）
     let payload: Payload = serde_json::from_str(&json_arg)
         .map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
@@ -46,17 +52,17 @@ fn run() -> Result<String, String> {
     let template = std::fs::read_to_string(&template_path)
         .map_err(|e| format!("Failed to read SVG template '{}': {}", template_path, e))?;
 
-    // PNGバイト列を生成
-    let png_bytes = image::render(&payload, &template, &font_path)
-        .map_err(|e| format!("Failed to render image: {}", e))?;
-
-    // ファイル名を決定して書き込む
-    let filename = hash::review_id_to_filename(payload.review_id);
-    let output_path = std::path::Path::new(&output_dir).join(&filename);
-    std::fs::write(&output_path, &png_bytes)
-        .map_err(|e| format!("Failed to write PNG '{}': {}", output_path.display(), e))?;
-
-    Ok(filename)
+    match payload {
+        Payload::Review(review) => {
+            let png_bytes = image::render(&review, &template, &font_path)
+                .map_err(|e| format!("Failed to render image: {}", e))?;
+            let filename = hash::review_id_to_filename(review.review_id);
+            let output_path = std::path::Path::new(&output_dir).join(&filename);
+            std::fs::write(&output_path, &png_bytes)
+                .map_err(|e| format!("Failed to write PNG '{}': {}", output_path.display(), e))?;
+            Ok(filename)
+        }
+    }
 }
 
 fn main() {

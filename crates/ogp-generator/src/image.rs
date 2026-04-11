@@ -1,12 +1,12 @@
 use tiny_skia::Pixmap;
 use usvg::Tree;
 
-use crate::Payload;
+use crate::ReviewPayload;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// SVGテンプレートにペイロードを埋め込んでPNGバイト列を返す
-pub fn render(payload: &Payload, template: &str, font_path: &str) -> Result<Vec<u8>> {
+pub fn render(payload: &ReviewPayload, template: &str, font_path: &str) -> Result<Vec<u8>> {
     let svg = build_svg(payload, template);
 
     let mut opt = usvg::Options::default();
@@ -21,7 +21,7 @@ pub fn render(payload: &Payload, template: &str, font_path: &str) -> Result<Vec<
 }
 
 /// プレースホルダーを置換してSVG文字列を生成する
-fn build_svg(payload: &Payload, template: &str) -> String {
+fn build_svg(payload: &ReviewPayload, template: &str) -> String {
     let spoiler_badge = if payload.has_spoiler {
         "<rect x=\"40\" y=\"30\" width=\"280\" height=\"56\" rx=\"8\" fill=\"#dc2626\"/>\
          <text x=\"180\" y=\"67\" font-size=\"30\" fill=\"#ffffff\" text-anchor=\"middle\" \
@@ -47,13 +47,13 @@ fn build_svg(payload: &Payload, template: &str) -> String {
         .replace("{{SPOILER_BADGE}}", spoiler_badge)
         .replace("{{GAME_TITLE}}", &escape_xml(&payload.game_title_name))
         .replace("{{TITLE_FONT_SIZE}}", title_font_size)
-        .replace("{{SHOW_ID}}", &escape_xml(&payload.show_id))
+        .replace("{{USER_NAME}}", &escape_xml(&payload.user_name))
         .replace("{{TOTAL_SCORE}}", &total_score)
         .replace("{{AXIS_SCORES}}", &escape_xml(&axis_scores))
 }
 
 /// null でない軸スコアのみを全角スペース区切りで結合する
-fn build_axis_scores(payload: &Payload) -> String {
+fn build_axis_scores(payload: &ReviewPayload) -> String {
     let mut parts = Vec::new();
     if let Some(v) = payload.fear_meter {
         parts.push(format!("怖さ {}/4", v));
@@ -82,15 +82,15 @@ fn escape_xml(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Payload;
+    use crate::ReviewPayload;
 
     const TEMPLATE: &str = include_str!("../assets/review-template.svg");
 
-    fn sample_payload() -> Payload {
-        Payload {
+    fn sample_payload() -> ReviewPayload {
+        ReviewPayload {
             review_id: 1,
             game_title_name: "バイオハザード RE:2".to_string(),
-            show_id: "huckle".to_string(),
+            user_name: "huckle".to_string(),
             total_score: Some(95),
             fear_meter: Some(3),
             score_story: Some(4),
@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_build_axis_scores_partial_null() {
-        let payload = Payload {
+        let payload = ReviewPayload {
             fear_meter: None,
             score_story: Some(2),
             score_atmosphere: None,
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn test_build_svg_null_total_score() {
-        let payload = Payload {
+        let payload = ReviewPayload {
             total_score: None,
             ..sample_payload()
         };
