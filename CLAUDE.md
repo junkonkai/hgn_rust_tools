@@ -108,6 +108,17 @@ Null handling:
 - axis score `null` → omit that axis from the image
 - `has_spoiler: true` → show `【ネタバレあり】` badge top-left
 
+## Versioning
+
+修正が完了したら、必ずユーザーにバージョンをどうするか確認すること。
+
+バージョニングの方針（セマンティックバージョニング）：
+- **パッチ** (`x.x.+1`): バグ修正、内部リファクタリングなど後方互換のある小変更
+- **マイナー** (`x.+1.0`): 後方互換のある機能追加（新しい`type`対応など）
+- **メジャー** (`+1.0.0`): 後方互換のない破壊的変更（CLIインターフェースの変更など）
+
+バージョンは [crates/ogp-generator/Cargo.toml](crates/ogp-generator/Cargo.toml) の `version` フィールドで管理する。
+
 ## Deployment
 
 Binary is deployed to `/usr/local/bin/ogp-generator` on the server via GitHub Actions (see `docs/plan/1-2.implementation-plan.md` Phase 7). No service process or systemd unit required — the binary is invoked per-job by Laravel's queue worker.
