@@ -123,6 +123,10 @@ Null handling:
 
 Binary is deployed to `/usr/local/bin/ogp-generator` on the server via GitHub Actions (see `docs/plan/1-2.implementation-plan.md` Phase 7). No service process or systemd unit required — the binary is invoked per-job by Laravel's queue worker.
 
+## SVGテンプレートの扱い
+
+`review-template.svg` は Laravel側リポジトリ（hgs_re3）で管理されており、このリポジトリにはコミットしない。作業中にSVGテンプレートを編集した場合は、**チャットでユーザーにLaravel側リポジトリへのコミットを促すこと**。このリポジトリからはコミットしないこと。
+
 ## Security — Public Repository
 
 **このリポジトリはGitHub上でpublicです。** ドキュメントやコードに以下の情報を記載しないこと：
