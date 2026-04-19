@@ -41,7 +41,7 @@ fn build_svg(payload: &ReviewPayload, template: &str) -> String {
         None => "-".to_string(),
     };
 
-    let axis_scores = build_axis_scores(payload);
+    let (axis_line1, axis_line2) = build_axis_scores(payload);
 
     template
         .replace("{{SPOILER_BADGE}}", spoiler_badge)
@@ -49,25 +49,32 @@ fn build_svg(payload: &ReviewPayload, template: &str) -> String {
         .replace("{{TITLE_FONT_SIZE}}", title_font_size)
         .replace("{{USER_NAME}}", &escape_xml(&payload.user_name))
         .replace("{{TOTAL_SCORE}}", &total_score)
-        .replace("{{AXIS_SCORES}}", &escape_xml(&axis_scores))
+        .replace("{{AXIS_SCORES_LINE1}}", &escape_xml(&axis_line1))
+        .replace("{{AXIS_SCORES_LINE2}}", &escape_xml(&axis_line2))
 }
 
-/// null でない軸スコアのみを全角スペース区切りで結合する
-fn build_axis_scores(payload: &ReviewPayload) -> String {
-    let mut parts = Vec::new();
-    if let Some(v) = payload.fear_meter {
-        parts.push(format!("怖さ {}/4", v));
-    }
+/// null でない軸スコアを2行に分けて返す（1行目: 怖さ、2行目: その他）
+fn build_axis_scores(payload: &ReviewPayload) -> (String, String) {
+    let line1 = match payload.fear_meter {
+        Some(v) => format!("怖さ {}/40", v),
+        None => String::new(),
+    };
+
+    let mut line2_parts = Vec::new();
     if let Some(v) = payload.score_story {
-        parts.push(format!("ストーリー {}/4", v));
+        line2_parts.push(format!("ストーリー {}/20", v));
     }
     if let Some(v) = payload.score_atmosphere {
-        parts.push(format!("雰囲気 {}/4", v));
+        line2_parts.push(format!("雰囲気 {}/20", v));
     }
     if let Some(v) = payload.score_gameplay {
-        parts.push(format!("ゲーム性 {}/4", v));
+        line2_parts.push(format!("ゲーム性 {}/20", v));
     }
-    parts.join("　")
+    if let Some(v) = payload.user_score_adjustment {
+        line2_parts.push(format!("さじ加減　{}/20", v));
+    }
+
+    (line1, line2_parts.join("　"))
 }
 
 /// SVGテキストコンテンツ用のXMLエスケープ
@@ -96,6 +103,7 @@ mod tests {
             score_story: Some(4),
             score_atmosphere: Some(4),
             score_gameplay: Some(3),
+            user_score_adjustment: Some(-5),
             has_spoiler: false,
         }
     }
@@ -142,11 +150,12 @@ mod tests {
     #[test]
     fn test_build_axis_scores_all_present() {
         let payload = sample_payload();
-        let result = build_axis_scores(&payload);
-        assert!(result.contains("怖さ 3/4"));
-        assert!(result.contains("ストーリー 4/4"));
-        assert!(result.contains("雰囲気 4/4"));
-        assert!(result.contains("ゲーム性 3/4"));
+        let (line1, line2) = build_axis_scores(&payload);
+        assert!(line1.contains("怖さ 3/40"));
+        assert!(line2.contains("ストーリー 4/20"));
+        assert!(line2.contains("雰囲気 4/20"));
+        assert!(line2.contains("ゲーム性 3/20"));
+        assert!(line2.contains("さじ加減　-5/20"));
     }
 
     #[test]
@@ -156,13 +165,15 @@ mod tests {
             score_story: Some(2),
             score_atmosphere: None,
             score_gameplay: Some(4),
+            user_score_adjustment: None,
             ..sample_payload()
         };
-        let result = build_axis_scores(&payload);
-        assert!(!result.contains("怖さ"));
-        assert!(result.contains("ストーリー 2/4"));
-        assert!(!result.contains("雰囲気"));
-        assert!(result.contains("ゲーム性 4/4"));
+        let (line1, line2) = build_axis_scores(&payload);
+        assert!(line1.is_empty());
+        assert!(line2.contains("ストーリー 2/20"));
+        assert!(!line2.contains("雰囲気"));
+        assert!(line2.contains("ゲーム性 4/20"));
+        assert!(!line2.contains("さじ加減"));
     }
 
     #[test]
@@ -177,7 +188,7 @@ mod tests {
 
     #[test]
     fn test_build_svg_spoiler_badge() {
-        let with_spoiler = Payload {
+        let with_spoiler = ReviewPayload {
             has_spoiler: true,
             ..sample_payload()
         };
@@ -198,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_build_svg_long_title_font_size() {
-        let long_title = Payload {
+        let long_title = ReviewPayload {
             game_title_name: "あ".repeat(31),
             ..sample_payload()
         };

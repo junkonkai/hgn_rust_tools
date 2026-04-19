@@ -20,6 +20,7 @@ pub struct ReviewPayload {
     pub score_story: Option<i64>,
     pub score_atmosphere: Option<i64>,
     pub score_gameplay: Option<i64>,
+    pub user_score_adjustment: Option<i64>,
     pub has_spoiler: bool,
 }
 
