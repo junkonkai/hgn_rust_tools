@@ -1,6 +1,6 @@
 [package]
 name = "ogp-generator"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 
 [[bin]]
@@ -15,3 +15,4 @@ tiny-skia = "0.11"
 usvg = "0.42"
 sha2 = "0.10"
 hex = "0.4"
+png = "0.17"

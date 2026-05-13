@@ -275,9 +275,10 @@ dependencies = [
 
 [[package]]
 name = "ogp-generator"
-version = "1.0.2"
+version = "1.0.3"
 dependencies = [
  "hex",
+ "png",
  "resvg",
  "serde",
  "serde_json",

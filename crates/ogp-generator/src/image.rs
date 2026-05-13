@@ -17,7 +17,33 @@ pub fn render(payload: &ReviewPayload, template: &str, font_path: &str) -> Resul
     let mut pixmap = Pixmap::new(1200, 630).ok_or("Failed to allocate pixmap")?;
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
-    Ok(pixmap.encode_png()?)
+    Ok(encode_rgb_png(&pixmap)?)
+}
+
+/// pixmapをアルファなし(RGB)のPNGにエンコードする
+/// tiny_skiaのpremultiplied RGBAを白背景に合成してからRGB PNGとして出力する
+fn encode_rgb_png(pixmap: &Pixmap) -> Result<Vec<u8>> {
+    let width = pixmap.width();
+    let height = pixmap.height();
+    let rgba = pixmap.data();
+
+    let mut rgb = Vec::with_capacity((width * height * 3) as usize);
+    for px in rgba.chunks(4) {
+        let a = px[3] as u16;
+        // premultiplied src + (1 - alpha) * white = premul + (255 - a)
+        rgb.push((px[0] as u16 + (255 - a)) as u8);
+        rgb.push((px[1] as u16 + (255 - a)) as u8);
+        rgb.push((px[2] as u16 + (255 - a)) as u8);
+    }
+
+    let mut buf = Vec::new();
+    let mut encoder = png::Encoder::new(&mut buf, width, height);
+    encoder.set_color(png::ColorType::Rgb);
+    encoder.set_depth(png::BitDepth::Eight);
+    let mut writer = encoder.write_header()?;
+    writer.write_image_data(&rgb)?;
+    drop(writer);
+    Ok(buf)
 }
 
 /// プレースホルダーを置換してSVG文字列を生成する
