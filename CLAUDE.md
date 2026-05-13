@@ -51,8 +51,8 @@ cargo test -p ogp-generator test_function_name
 # Check for compile errors without producing a binary
 cargo check -p ogp-generator
 
-# Lint
-cargo clippy -p ogp-generator
+# Lint（本番CIと同じ条件で実行すること。-D warnings なしだと通っても本番でコケる）
+cargo clippy -p ogp-generator -- -D warnings
 
 # Format
 cargo fmt

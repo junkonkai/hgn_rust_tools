@@ -17,7 +17,7 @@ pub fn render(payload: &ReviewPayload, template: &str, font_path: &str) -> Resul
     let mut pixmap = Pixmap::new(1200, 630).ok_or("Failed to allocate pixmap")?;
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
-    Ok(encode_rgb_png(&pixmap)?)
+    encode_rgb_png(&pixmap)
 }
 
 /// pixmapをアルファなし(RGB)のPNGにエンコードする
