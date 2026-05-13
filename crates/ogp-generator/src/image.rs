@@ -181,7 +181,7 @@ mod tests {
         assert!(line2.contains("ストーリー 4/20"));
         assert!(line2.contains("雰囲気 4/20"));
         assert!(line2.contains("ゲーム性 3/20"));
-        assert!(line2.contains("さじ加減　-5/20"));
+        assert!(line2.contains("さじ加減 -5/20"));
     }
 
     #[test]
