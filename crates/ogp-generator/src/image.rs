@@ -97,7 +97,7 @@ fn build_axis_scores(payload: &ReviewPayload) -> (String, String) {
         line2_parts.push(format!("ゲーム性 {}/20", v));
     }
     if let Some(v) = payload.user_score_adjustment {
-        line2_parts.push(format!("さじ加減　{}/20", v));
+        line2_parts.push(format!("さじ加減 {}/20", v));
     }
 
     (line1, line2_parts.join("　"))
